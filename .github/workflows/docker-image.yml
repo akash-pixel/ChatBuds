@@ -1,0 +1,34 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout code
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # Step 2: Build and run the Docker container
+    - name: Build and Run Docker Container
+      run: |
+        # Build the Docker image with a unique tag
+        TAG=$(date +%s)
+        docker build . --file Dockerfile --tag chat:$TAG
+        
+        # Stop and remove any running container named "chat-container" (optional, for cleanup)
+        docker stop chat-container || true
+        docker rm chat-container || true
+
+        # Run the container from the built image
+        docker run -d \
+          --name chat-container \
+          -p 4000:4000 \
+          -p 3000:3000 \
+          chat:$TAG
