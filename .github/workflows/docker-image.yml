@@ -2,33 +2,41 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout code
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      # Step 1: Checkout code
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    # Step 2: Build and run the Docker container
-    - name: Build and Run Docker Container
-      run: |
-        # Build the Docker image with a unique tag
-        TAG=$(date +%s)
-        docker build . --file Dockerfile --tag chat:$TAG
-        
-        # Stop and remove any running container named "chat-container" (optional, for cleanup)
-        docker stop chat-container || true
-        docker rm chat-container || true
+      # Step 2: List public IP address of GitHub Actions runner
+      - name: Get Public IP
+        run: |
+          echo "Fetching public IP address..."
+          PUBLIC_IP=$(curl -s ifconfig.me)
+          echo "Public IP Address: $PUBLIC_IP"
+          echo "::set-output name=public_ip::$PUBLIC_IP"
 
-        # Run the container from the built image
-        docker run -d \
-          --name chat-container \
-          -p 4000:4000 \
-          -p 3000:3000 \
-          chat:$TAG
+      # Step 3: Build and run the Docker container
+      - name: Build and Run Docker Container
+        run: |
+          # Build the Docker image with a unique tag
+          TAG=$(date +%s)
+          docker build . --file Dockerfile --tag chat:$TAG
+
+          # Stop and remove any running container named "chat-container" (optional, for cleanup)
+          docker stop chat-container || true
+          docker rm chat-container || true
+
+          # Run the container from the built image
+          docker run -d \
+            --name chat-container \
+            -p 4000:4000 \
+            -p 3000:3000 \
+            chat:$TAG
